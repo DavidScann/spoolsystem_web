@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style.css">
+    <title>spool.systems</title>
+</head>
+<body>
+    <script src="https://pixijs.download/release/pixi.js"></script>
+    <script type="module">
+        import { Application, Sprite, Assets, TextureStyle, Container } from 'pixi.js';
+
+        // PIXI App Initialization
+        const app = new Application();
+        await app.init({
+          width: window.innerWidth,
+          height: window.innerHeight,
+          backgroundColor: 0x000000,
+          resizeTo: window, // Auto-resize canvas to the window
+      });
+        document.body.appendChild(app.canvas);
+
+
+        // Global PIXI app reference for debugging
+        globalThis.__PIXI_APP__ = app;
+
+        // Set texture scaling to nearest neighbor
+        TextureStyle.defaultOptions.scaleMode = 'nearest';
+
+        // Sprite resizing function
+        function resizeFlags(sprite, xPositionFactor = 0.5) {
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight;
+
+            // Calculate scale to maintain aspect ratio
+            const scaleWidth = containerWidth / sprite.texture.width;
+            const scaleHeight = containerHeight / sprite.texture.height;
+            const scaleFactor = Math.min(scaleWidth, scaleHeight) * 0.14;
+
+            // Apply scaling and position
+            sprite.scale.set(scaleFactor);
+            sprite.x = containerWidth * xPositionFactor;
+            sprite.y = containerHeight / 2;
+        }
+
+        // Setting up a container for Flags
+        const flagsRender = new Container(
+          {
+            isRenderGroup: true
+          }
+        )
+
+        // Function to load and setup a sprite
+        async function setupFlags(imagePath, xPositionFactor = 0.5) {
+            await Assets.load(imagePath); // Preload the texture
+            const sprite = Sprite.from(imagePath);
+            sprite.anchor.set(0.5);
+           resizeFlags(sprite, xPositionFactor);
+            flagsRender.addChild(sprite);
+            return sprite;
+        }
+
+        // Initialize and place sprites
+        let flagGB, flagVN;
+        async function initSprites() {
+            flagGB = await setupFlags('/assets/flaggb_lowres.png', 0.4); // GB flag
+            flagVN = await setupFlags('/assets/flagvn_lowres.png', 0.6); // VN flag
+        }
+
+        await initSprites();
+
+        app.stage.addChild(flagsRender);
+        // Handle resizing
+        window.addEventListener('resize', () => {
+            app.renderer.resize(window.innerWidth, window.innerHeight);
+           resizeFlags(flagGB, 0.4);
+           resizeFlags(flagVN, 0.6);
+        });
+    </script>
+</body>
+</html>
