@@ -238,7 +238,7 @@ function animateFlagsRenderUpwards() {
             cookieDisclaimerText = new Text(
                 {
                     text: langDisclaimerText,
-                    style
+                    style   
                 } 
                 );
                 cookieDisclaimerText.anchor.set(0.5);
@@ -260,14 +260,16 @@ function animateFlagsRenderUpwards() {
         
             // Adjust position
             text.x = containerWidth / 2;
+            console.log(text.y);
             text.y = containerHeight / 1.65;
-        
+            console.log(text.y);
+
             // Check dimensions and adjust font size iteratively if needed
             while (text.width > containerWidth || text.height > containerHeight) {
                 text.style.fontSize *= 0.9; // Decrease font size by 10%
-                text.updateText(); // Update text rendering with new dimensions
+                text.text = text.text; // Trigger text update
             }
-        }        
+        }
 
         function animateDisclaimerText(text, containerWidth, containerHeight) {
             const startY = text.y - 50; // Current position
@@ -295,9 +297,11 @@ function animateFlagsRenderUpwards() {
                 // Update the container's position
                 text.y = startY + (targetY - startY) * easedProgress;
         
+                console.log("progress:" + progress);
                 // Stop the animation when it's done
-                if (progress === 1) {
-                    app.ticker.remove(ticker); // Remove the ticker
+                if (progress >= 1) {
+                    console.log("progress hit 1")
+                    ticker.stop(); // Remove the ticker
                 }
             });
         }
@@ -409,8 +413,8 @@ function animateFlagsRenderUpwards() {
                 cookieButton.y = startY + (targetY - startY) * easedProgress;
         
                 // Stop the animation when it's done
-                if (progress === 1) {
-                    app.ticker.remove(ticker); // Remove the ticker
+                if (progress >= 1) {
+                    ticker.stop(); // Remove the ticker
                 }
             });
             }
@@ -423,6 +427,8 @@ function animateFlagsRenderUpwards() {
             resizeFlags(flagGB, 0.4, containerWidth, containerHeight);
             resizeFlags(flagVN, 0.6, containerWidth, containerHeight);
             resizeDisclaimer(cookieDisclaimerText, containerWidth, containerHeight);
+            console.log(containerHeight);
+            console.log(containerHeight / 1.65);
             resizeButton(buttonFrame, buttonFrameText, containerWidth, containerHeight);
         });
     </script>
