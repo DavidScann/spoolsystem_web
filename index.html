@@ -15,7 +15,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
     <script type="module">
 
-        import { Application, Sprite, Assets, TextureStyle, Container, Text, TextStyle, Graphics } from 'pixi.js';
+        import { Application, Sprite, Assets, TextureStyle, Container, Text, TextStyle, Graphics, Ticker } from 'pixi.js';
         import { CRTFilter, AdvancedBloomFilter, RGBSplitFilter } from 'pixi-filters';
         // import { FancyButton } from '@pixi/ui';
 
@@ -67,21 +67,29 @@
 
         // Sprite resizing function
         function resizeFlags(sprite, xPositionFactor = 0.5, containerWidth, containerHeight) {
-            
             if (containerWidth === undefined || containerHeight === undefined) {
                 containerWidth = window.innerWidth;
                 containerHeight = window.innerHeight;
             }
-
+        
             // Calculate scale to maintain aspect ratio
             const scaleWidth = containerWidth / sprite.texture.width;
             const scaleHeight = containerHeight / sprite.texture.height;
             const scaleFactor = Math.min(scaleWidth, scaleHeight) * 0.14;
-
-            // Apply scaling and position
+        
+            // Apply scaling
             sprite.scale.set(scaleFactor);
-            sprite.x = containerWidth * xPositionFactor;
-            sprite.y = containerHeight / 2;
+        
+            // Adjust position based on screen width
+            if (containerWidth < 600) { // Adjust this value as needed
+                // Align vertically
+                sprite.x = containerWidth / 2;
+                sprite.y = containerHeight * xPositionFactor;
+            } else {
+                // Align horizontally
+                sprite.x = containerWidth * xPositionFactor;
+                sprite.y = containerHeight / 2;
+            }
         }
 
         // Setting up a container for Flags
@@ -156,7 +164,6 @@
             }
             selectedFlag = flag;
             selectedFlag.alpha = 1; // Keep alpha at 1 for the selected flag
-            console.log(`${flag === flagGB ? "flagGB" : "flagVN"} selected`);
             if (flagMoved != true) {
                 animateFlagsRenderUpwards();
                 flagMoved = true;
@@ -173,6 +180,7 @@
                     langDisclaimerText = VNLangDisclaimerText;
                 }
                 cookieDisclaimerText.text = langDisclaimerText;
+                resizeDisclaimer(cookieDisclaimerText, window.innerWidth, window.innerHeight);
             }
             if (buttonCreated != true) {
                 createButtonFrame(selectedFlag);
@@ -200,8 +208,9 @@ function animateFlagsRenderUpwards() {
     let elapsedTime = 0;
 
     // Add a ticker to animate the movement
-    const ticker = app.ticker.add((delta) => {
-        elapsedTime += app.ticker.deltaMS;
+    const flagTicker = new Ticker()
+    flagTicker.add((delta) => {
+        elapsedTime += flagTicker.deltaMS;
 
         // Calculate the current progress (0 to 1)
         const progress = Math.min(elapsedTime / duration, 1);
@@ -211,13 +220,9 @@ function animateFlagsRenderUpwards() {
 
         // Update the container's position
         flagsRender.y = startY + (targetY - startY) * easedProgress;
-
-        // Stop the animation when it's done
-        if (progress === 1) {
-            app.ticker.remove(ticker); // Remove the ticker
-        }
-    });
-}
+            });
+        flagTicker.start();
+    };
         const GBLangDisclaimerText = "THIS SITE USES COOKIES TO \nSAVE YOUR PROGRESS. CONTINUE?";
         const VNLangDisclaimerText = "WEBSITE NÀY SỬ DỤNG COOKIES ĐỂ \nLƯU QUÁ TRÌNH CỦA BẠN. TIẾP TỤC?";
         let cookieDisclaimerText;
@@ -231,8 +236,7 @@ function animateFlagsRenderUpwards() {
             });
             if (flag === flagGB) {
                 langDisclaimerText = GBLangDisclaimerText;
-            }
-            else {
+            } else {
                 langDisclaimerText = VNLangDisclaimerText;
             }
             cookieDisclaimerText = new Text(
@@ -240,10 +244,11 @@ function animateFlagsRenderUpwards() {
                     text: langDisclaimerText,
                     style   
                 } 
-                );
-                cookieDisclaimerText.anchor.set(0.5);
-                resizeDisclaimer(cookieDisclaimerText, window.innerWidth, window.innerHeight);
-                animateDisclaimerText(cookieDisclaimerText, window.innerWidth, window.innerHeight);
+            );
+            cookieDisclaimerText.anchor.set(0.5);
+            cookieDisclaimerText.alpha = 0; // Set initial alpha to 0
+            resizeDisclaimer(cookieDisclaimerText, window.innerWidth, window.innerHeight);
+            animateDisclaimerText(cookieDisclaimerText, window.innerWidth, window.innerHeight);
             app.stage.addChild(cookieDisclaimerText);
         }
 
@@ -260,15 +265,20 @@ function animateFlagsRenderUpwards() {
         
             // Adjust position
             text.x = containerWidth / 2;
-            console.log(text.y);
             text.y = containerHeight / 1.65;
-            console.log(text.y);
 
             // Check dimensions and adjust font size iteratively if needed
             while (text.width > containerWidth || text.height > containerHeight) {
                 text.style.fontSize *= 0.9; // Decrease font size by 10%
                 text.text = text.text; // Trigger text update
             }
+
+            // Set a minimum font size
+            const minFontSize = 14; // Adjust this value as needed
+            if (text.style.fontSize < minFontSize) {
+                text.style.fontSize = minFontSize;
+            }
+            console.log(text.style.fontSize);
         }
 
         function animateDisclaimerText(text, containerWidth, containerHeight) {
@@ -280,8 +290,9 @@ function animateFlagsRenderUpwards() {
             let elapsedTime = 0;
         
             // Add a ticker to animate the movement
-            const ticker = app.ticker.add((delta) => {
-                elapsedTime += app.ticker.deltaMS;
+            const cookieTicker = new Ticker()
+            cookieTicker.add((delta) => {
+                elapsedTime += cookieTicker.deltaMS;
         
                 // Calculate the current progress (0 to 1)
                 const progress = Math.min(elapsedTime / duration, 1);
@@ -296,14 +307,13 @@ function animateFlagsRenderUpwards() {
         
                 // Update the container's position
                 text.y = startY + (targetY - startY) * easedProgress;
-        
-                console.log("progress:" + progress);
+         
                 // Stop the animation when it's done
                 if (progress >= 1) {
-                    console.log("progress hit 1")
-                    ticker.stop(); // Remove the ticker
+                    cookieTicker.destroy(); // Remove the ticker
                 }
             });
+            cookieTicker.start();
         }
 
         // Initialize and place sprites
@@ -369,7 +379,7 @@ function animateFlagsRenderUpwards() {
                 );
             buttonFrameText.anchor.set(0.5);
             buttonFrameText.x = buttonFrame.x + buttonWidth / 2;
-            buttonFrameText.y = buttonFrame.y + buttonHeight / 2;
+            buttonFrameText.y = buttonFrame.y + buttonHeight / 2;   
             
             setTimeout(() => {
                 animateCookieButton(cookieButton);
@@ -379,11 +389,33 @@ function animateFlagsRenderUpwards() {
         }
 
         function resizeButton(buttonFrame, buttonFrameText, containerWidth, containerHeight) {
-            buttonFrame.rect(0, 0, buttonWidth, buttonHeight);
-            buttonFrame.x = (containerWidth - buttonWidth) / 2;
-            buttonFrame.y = (containerHeight - buttonHeight) / 1.35;
-            buttonFrameText.x = buttonFrame.x + buttonWidth / 2;
-            buttonFrameText.y = buttonFrame.y + buttonHeight / 2;
+            // Calculate new button dimensions based on container size
+            const newButtonWidth = containerWidth / 7;
+            const newButtonHeight = containerHeight / 12;
+        
+            // Update button frame dimensions
+            buttonFrame.clear();
+            buttonFrame.beginFill(0x8c8c8c, 0);
+            buttonFrame.lineStyle(5, 0xffffff, 1);
+            buttonFrame.drawRect(0, 0, newButtonWidth, newButtonHeight);
+            buttonFrame.endFill();
+        
+            // Update button frame position
+            buttonFrame.x = (containerWidth - newButtonWidth) / 2;
+            buttonFrame.y = (containerHeight - newButtonHeight) / 1.35;
+        
+        
+            // Update button text position
+            buttonFrameText.anchor.set(0.5); // Center the text
+            buttonFrameText.x = buttonFrame.x + newButtonWidth / 2;
+            buttonFrameText.y = buttonFrame.y + newButtonHeight / 2;
+
+            // Update button text font
+            buttonFrameText.style.fontSize = Math.min(newButtonWidth, newButtonHeight) / 4;
+
+            // Ensure the text is centered after resizing
+            buttonFrameText.x = buttonFrame.x + newButtonWidth / 2;
+            buttonFrameText.y = buttonFrame.y + newButtonHeight / 2;
         }
 
         function animateCookieButton(cookieButton) {
@@ -414,7 +446,7 @@ function animateFlagsRenderUpwards() {
         
                 // Stop the animation when it's done
                 if (progress >= 1) {
-                    ticker.stop(); // Remove the ticker
+                    // ticker.stop(); // Remove the ticker
                 }
             });
             }
@@ -427,8 +459,6 @@ function animateFlagsRenderUpwards() {
             resizeFlags(flagGB, 0.4, containerWidth, containerHeight);
             resizeFlags(flagVN, 0.6, containerWidth, containerHeight);
             resizeDisclaimer(cookieDisclaimerText, containerWidth, containerHeight);
-            console.log(containerHeight);
-            console.log(containerHeight / 1.65);
             resizeButton(buttonFrame, buttonFrameText, containerWidth, containerHeight);
         });
     </script>
