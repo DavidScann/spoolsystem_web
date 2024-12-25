@@ -85,9 +85,55 @@ Starting systemd-udevd version 256.6-1-arch\n \
 [    1.789023] Starting system logger... done\n \
 [    1.890123] Initializing random number generator... done\n \
 ";
+
+function createInputBox() {
+    // Create styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
+        #input-box {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: default;
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Create elements
+    const container = document.createElement('div');
+    container.className = 'container';
+
+    const form = document.createElement('form');
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'input-box';
+    input.autocomplete = 'off';
+
+    // Construct hierarchy
+    form.appendChild(input);
+    container.appendChild(form);
+    document.body.appendChild(container);
+}
+
     introMovie();
 
     function introMovie() {
+        createInputBox();
         const terminalObject = new Terminal();
         introSequence.addChild(terminalObject);
     }

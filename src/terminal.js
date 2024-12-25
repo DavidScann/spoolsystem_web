@@ -94,18 +94,38 @@ export class Terminal extends Container {
     }
 
     basicResponse(buf) {
-        if (buf === "help") {
+        switch (buf) {
+            case "help":
             return `\
-help [command]              Show this general help page, and help for specific commands.
-info                        Show information about this system.
-clear                       Clear the page of text.
-collection                  View your collection of files.
-submitkey [keystring]       Enter a key for the Spool System.
-tips                        View tips to using this terminal effectively.
-passwd                      Change the password for your account.
-reset                       Reset the Spool System. [NON-RECOVERABLE]
-exit                        ITEM_DESCRIPTION_INVALID`;
-        } else {
+    help [command]              Show this general help page, and help for specific commands.
+    info                        Show information about this system.
+    clear                       Clear the page of text.
+    collection                  View your collection of files.
+    submitkey [keystring]       Enter a key for the Spool System.
+    tips                        View tips to using this terminal effectively.
+    passwd                      Change the password for your account.
+    reset                       Reset the Spool System. [NON-RECOVERABLE]
+    exit                        ITEM_DESCRIPTION_INVALID`;
+    case "info":
+        return ` 
+ @@@@@@@@@@@@@@@@@@@@@      		username@spoolsystem
+@                     @     		-----------------------------
+@@                   @@     		OS: ThreadOS BETA v1.2.0
+  @@@@@@@@@@@@@@@@@@@       		CPU: aDX Series 9 (36) @ 4.3GHz
+   @        @@@    @        		GPU: N/A
+   @    @@@        @@       		Memory: 16 GiB
+   @ @@         @@ @  @@    		SpoolSystem version: b1.2.0
+   @        @@@    @    @@  		>INIT_keys: 1/4
+   @    @@@        @     @  
+   @ @@@        @@@@     @  
+   @        @@@    @     @  
+   @    @@@        @        
+  @@@@@@@@@@@@@@@@@@@       
+@@                   @@     
+@                     @     
+ @@@@@@@@@@@@@@@@@@@@@
+`;
+            default:
             return `${buf}: command not found`;
         }
     }
