@@ -9,5 +9,4 @@ npm i
 
 npm run dev
 ```
-```
 You do, of course, need to have Node.js installed.
