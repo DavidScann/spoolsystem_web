@@ -1,4 +1,25 @@
-async function showScreen(app) {
+import {
+    Application,
+    Sprite,
+    Assets,
+    TextureStyle,
+    Container,
+    Text,
+    TextStyle,
+    Graphics,
+    Ticker
+} from 'pixi.js';
+
+import {
+    getGlobalSequence,
+    setGlobalSequence
+} from './game.js';
+
+import {
+    showScreen as showIntroMovie,
+} from './intro.js';
+
+export async function showScreen(app) {
     // Create the language sequence container
     const langSequence = new Container({
         isRenderGroup: true
@@ -8,7 +29,8 @@ async function showScreen(app) {
     let selectedFlag = null;
 
     // Sequence tracker, helps to determine the order of events
-    let sequence = "languageSelect";
+    setGlobalSequence("languageSelect");
+    let sequence = getGlobalSequence();
 
     // Sprite resizing function
     function resizeFlags(sprite, xPositionFactor = 0.5, containerWidth, containerHeight) {
@@ -148,6 +170,9 @@ async function showScreen(app) {
 
     }
 
+    // define flagTicker "globally" to be able to destroy it later
+    const flagTicker = new Ticker();
+
     // Function to animate the flagsRender container upwards
     function animateFlagsRenderUpwards() {
         const startY = flagsRender.y; // Current position
@@ -158,7 +183,6 @@ async function showScreen(app) {
         let elapsedTime = 0;
 
         // Add a ticker to animate the movement
-        const flagTicker = new Ticker()
         flagTicker.add((delta) => {
             elapsedTime += flagTicker.deltaMS;
 
@@ -170,6 +194,10 @@ async function showScreen(app) {
 
             // Update the container's position
             flagsRender.y = startY + (targetY - startY) * easedProgress;
+
+            if (progress >= 1) {
+                flagTicker.destroy(); // Remove the ticker
+            }
         });
         flagTicker.start();
     };
@@ -227,7 +255,6 @@ async function showScreen(app) {
         if (text.style.fontSize < minFontSize) {
             text.style.fontSize = minFontSize;
         }
-        console.log(text.style.fontSize);
     }
 
     function animateDisclaimerText(text, containerWidth, containerHeight) {
@@ -300,15 +327,13 @@ async function showScreen(app) {
             width: 5
         });
 
-        buttonFrame.interactive = true;
+        setTimeout(() => {
+            buttonFrame.interactive = true;
+        }, 1250); // Match the duration of the longest animation (1250ms)
         buttonFrame.buttonMode = true;
         buttonFrame.cursor = 'pointer';
         buttonFrame.on('pointerdown', () => {
-            console.log('Button was clicked!');
-            finishSetup(langSequence).then(() => {
-                sequence = "intro";
-                introMovie();
-            });
+            finishSetup(langSequence);
         });
         buttonFrame.x = (window.innerWidth - buttonFrame.width) / 2;
         buttonFrame.y = (window.innerHeight - buttonFrame.height) / 1.35;
@@ -331,7 +356,7 @@ async function showScreen(app) {
         buttonFrameText.anchor.set(0.5);
         buttonFrameText.x = buttonFrame.x + buttonWidth / 2;
         buttonFrameText.y = buttonFrame.y + buttonHeight / 2;
-
+        cookieButton.alpha = 0;
         setTimeout(() => {
             resizeButton(buttonFrame, buttonFrameText, window.innerWidth, window.innerHeight);
             animateCookieButton(cookieButton);
@@ -377,6 +402,9 @@ async function showScreen(app) {
         buttonFrameText.y = buttonFrame.y + newButtonHeight / 2;
     }
 
+    // define buttonTicker "globally" to be able to destroy it later
+    const buttonTicker = new Ticker();
+
     function animateCookieButton(cookieButton) {
         const startY = cookieButton.y - 50; // Current position
         const targetY = startY + 50; // Move up by 50 pixels
@@ -386,8 +414,8 @@ async function showScreen(app) {
         let elapsedTime = 0;
 
         // Add a ticker to animate the movement
-        const ticker = app.ticker.add((delta) => {
-            elapsedTime += app.ticker.deltaMS;
+        buttonTicker.add((delta) => {
+            elapsedTime += buttonTicker.deltaMS;
 
             // Calculate the current progress (0 to 1)
             const progress = Math.min(elapsedTime / duration, 1);
@@ -402,71 +430,90 @@ async function showScreen(app) {
 
             // Update the container's position
             cookieButton.y = startY + (targetY - startY) * easedProgress;
+
+            // Stop the animation when it's done
+            if (progress >= 1) {
+                buttonTicker.destroy(); // Remove the ticker
+            }
         });
+        buttonTicker.start();
     }
 
     app.stage.addChild(langSequence);
 
     function finishSetup(container) {
-        return new Promise((resolve) => {
-            const startY = container.y; // Current position
-            const targetY = startY + 50; // Move down by 50 pixels
-            const duration = 750; // Animation duration in milliseconds
-            const easing = (t) => t * t; // Ease-in Exponential function
+        buttonFrame.interactive = false; // Disable button interactivity
+        const startY = container.y; // Current position
+        const targetY = startY + 50; // Move down by 50 pixels
+        const duration = 750; // Animation duration in milliseconds
+        const easing = (t) => t * t; // Ease-in Exponential function
 
-            let elapsedTime = 0;
+        let elapsedTime = 0;
 
-            // Add a ticker to animate the movement
-            const exitTicker = new Ticker()
-            exitTicker.add((delta) => {
-                elapsedTime += exitTicker.deltaMS;
+        // Add a ticker to animate the movement
+        const exitTicker = new Ticker()
+        exitTicker.add((delta) => {
+            elapsedTime += exitTicker.deltaMS;
 
-                // Calculate the current progress (0 to 1)
-                const progress = Math.min(elapsedTime / duration, 1);
+            // Calculate the current progress (0 to 1)
+            const progress = Math.min(elapsedTime / duration, 1);
 
-                // Lower brightness from 1 to 0
-                if (progress < 0.5) {
-                    container.alpha = 1 - progress * 2;
-                    if (container.alpha < 0.12) {
-                        container.alpha = 0;
-                    }
+            // Lower brightness from 1 to 0
+            if (progress < 0.5) {
+                container.alpha = 1 - progress * 2;
+                if (container.alpha < 0.12) {
+                    container.alpha = 0;
                 }
+            }
 
-                // Apply easing
-                const easedProgress = easing(progress);
+            // Apply easing
+            const easedProgress = easing(progress);
 
-                // Update the container's position
-                container.y = startY + (targetY - startY) * easedProgress;
+            // Update the container's position
+            container.y = startY + (targetY - startY) * easedProgress;
 
-                // Stop the animation when it's done
-                if (progress >= 1) {
-                    exitTicker.destroy(); // Remove the ticker
-                    app.stage.removeChild(container); // Remove the container from the stage
-                    Assets.unload(); // Unload all assets
-                    container.destroy({
-                        children: true,
-                        baseTexture: true
-                    }); // Destroy the container and its children
-                }
-            });
-            const language = langSelect; // language locked in
-            exitTicker.start();
-            resolve();
+            // Stop the animation when it's done
+            if (progress >= 1) {
+                exitTicker.destroy(); // Remove the ticker
+                app.stage.removeChild(container); // Remove the container from the stage
+                Assets.unload(['/assets/flaggb_lowres.png', '/assets/flagvn_lowres.png']); // Unload all assets
+                container.destroy({
+                    children: true,
+                    baseTexture: true
+                }); // Destroy the container and its children
+            }
         });
+        const language = langSelect; // language locked in
+        document.cookie = `language=${language}`;
+        exitTicker.start();
+        showIntroMovie(app);
+        sequence = getGlobalSequence();
     }
-}
 
-// Handle resizing
-window.addEventListener('resize', () => {
-    app.renderer.resize(window.innerWidth, window.innerHeight);
-    const containerWidth = window.innerWidth;
-    const containerHeight = window.innerHeight;
-
-    if (sequence = "languageSelect") {
+    // handle resizing
+    console.log(sequence);
+    // Store the resize handler as a named function so we can remove it later
+    const handleResize = () => {
+        app.renderer.resize(window.innerWidth, window.innerHeight);
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
         resizeFlags(flagGB, 0.4, containerWidth, containerHeight);
         resizeFlags(flagVN, 0.6, containerWidth, containerHeight);
         resizeDisclaimer(cookieDisclaimerText, containerWidth, containerHeight);
         resizeButton(buttonFrame, buttonFrameText, containerWidth, containerHeight);
-    }
+    };
 
-});
+    // Check sequence and add listener if appropriate
+    if (sequence === "languageSelect") {
+        window.addEventListener('resize', handleResize);
+
+        // Create an interval to check the sequence and remove listener if needed
+        const checkSequence = setInterval(() => {
+            const currentSequence = getGlobalSequence();
+            if (currentSequence !== "languageSelect") {
+                window.removeEventListener('resize', handleResize);
+                clearInterval(checkSequence);
+            }
+        }, 1000);
+    }
+}
