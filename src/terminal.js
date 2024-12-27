@@ -97,15 +97,15 @@ export class Terminal extends Container {
         switch (buf) {
             case "help":
             return `\
-    help [command]              Show this general help page, and help for specific commands.
-    info                        Show information about this system.
-    clear                       Clear the page of text.
-    collection                  View your collection of files.
-    submitkey [keystring]       Enter a key for the Spool System.
-    tips                        View tips to using this terminal effectively.
-    passwd                      Change the password for your account.
-    reset                       Reset the Spool System. [NON-RECOVERABLE]
-    exit                        ITEM_DESCRIPTION_INVALID`;
+help [command]              Show this general help page, and help for specific commands.
+info                        Show information about this system.
+clear                       Clear the page of text.
+collection                  View your collection of files.
+submitkey [keystring]       Enter a key for the Spool System.
+tips                        View tips to using this terminal effectively.
+passwd                      Change the password for your account.
+reset                       Reset the Spool System. [NON-RECOVERABLE]
+exit                        ITEM_DESCRIPTION_INVALID`;
     case "info":
         return ` 
  @@@@@@@@@@@@@@@@@@@@@      		username@spoolsystem
@@ -125,6 +125,8 @@ export class Terminal extends Container {
 @                     @     
  @@@@@@@@@@@@@@@@@@@@@
 `;
+            case "exit":
+                return "FATAL ERROR: `exit` needs to be run by a user with Administrator privileges.";
             default:
             return `${buf}: command not found`;
         }
